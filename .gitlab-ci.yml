@@ -1,0 +1,22 @@
+image: registry.brickchain.com/gitlab/gitlab-builder-docgen
+
+stages:
+  - documentation
+  - trigger
+
+documentation:
+  stage: documentation
+  only:
+    - master
+  script:
+    - plantuml -tsvg docs/*.puml
+    - eval $(vaultenv read -s secret/env/gitlab-ci/developer.brickchain.com-s3)
+    - aws s3 cp --recursive docs/ s3://brickchain-developer/services/$CI_PROJECT_NAME/
+
+trigger:
+  image: registry.brickchain.com/gitlab/gitlab-builder-base
+  stage: trigger
+  only:
+    - master
+  script:
+    - gitlab_trigger_downstream
